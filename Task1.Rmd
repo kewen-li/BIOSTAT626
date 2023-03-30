@@ -1,0 +1,50 @@
+---
+title: "Biostat626 Project Task1"
+author: "Kewen Li"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r,message=FALSE}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(caret)
+```
+
+```{r}
+training_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Midterm 1/training_data.txt", sep="", stringsAsFactors=TRUE)
+test_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Midterm 1/test_data.txt", sep="")
+```
+
+# Binary Classifier
+```{r}
+training_data$dynamic <- ifelse(training_data$activity %in% c(1,2,3), 1, 0)
+```
+```{r}
+
+# split the data into training and testing sets
+set.seed(42)
+split <- createDataPartition(training_data$dynamic, p=0.8, list=FALSE)
+X_train <- training_data[split, -c(1,2,564) ]
+X_test <- training_data[-split, -c(1,2,564)]
+y_train <- factor(training_data$dynamic[split])
+y_test <- factor(training_data$dynamic[-split])
+```
+
+
+```{r}
+
+fit <- train(X_train, y_train, method="glm", family="binomial", trControl=trainControl(method="none"))
+```
+```{r}
+y_pred <- predict(fit, X_test)
+confusionMatrix(y_pred, y_test)
+```
+```{r}
+binary_prediction <- predict(fit, test_data[,-1])
+binary_results_df <- data.frame(binary_prediction)
+binary_results_df
+```
+```{r}
+write.table(binary_results_df, "binary_k5484.txt", sep="\t", quote = FALSE, row.names=FALSE,col.names=FALSE)
+```
