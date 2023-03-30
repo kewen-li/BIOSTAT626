@@ -4,7 +4,7 @@ author: "Kewen Li"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
-```{r,message=FALSE}
+```{r,message=FALSE,warning=FALSE}
 library(readr)
 library(dplyr)
 library(tidyr)
@@ -12,18 +12,13 @@ library(caret)
 ```
 
 ```{r}
-training_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Midterm 1/training_data.txt", sep="", stringsAsFactors=TRUE)
-test_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Midterm 1/test_data.txt", sep="")
+training_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Project/Midterm/training_data.txt", sep="")
+test_data <- read.csv("~/Downloads/School/Umich/BIOSTAT 626/Project/Midterm/test_data.txt", sep="")
 ```
 
-# Binary Classifier
+# Multiple Classifier
+## Revise the Response Variable
 ```{r}
-training_data$activity
-```
-
-```{r}
-#training_data$class <- ifelse(training_data$activity %in% c(7,8,9,10,11,12), 1, 0)
-
 change_value <- function(x) {
   if (x >= 7) {
     return(7)
@@ -35,9 +30,8 @@ training_data['class'] <- apply(training_data['activity'],1, change_value)
 ```
 
 
+## split the data into training and testing sets
 ```{r}
-
-# split the data into training and testing sets
 set.seed(42)
 split <- createDataPartition(training_data$class, p=0.8, list=FALSE)
 X_train <- training_data[split, -c(1,2,564) ]
@@ -46,27 +40,40 @@ y_train <- factor(training_data$class[split])
 y_test <- factor(training_data$class[-split])
 ```
 
-```{r}
-X_train
-```
 
 ```{r}
 
 fit <- train(X_train, y_train, method="rf", trControl=trainControl(method="none"))
 ```
 ```{r}
+# calculate variable importance scores
+importance <- varImp(fit)
+
+# select top 2 features based on importance scores
+top_features <- row.names(importance$importance)[order(importance$importance$Overall, decreasing = TRUE)[1:500]]
+top_features
+```
+```{r}
+# fit model with top features only
+fit_top <- train(X_train[, top_features], y_train, method = "rf", trControl = trainControl(method = "none"))
+```
+
+```{r}
 y_pred <- predict(fit, X_test)
 confusionMatrix(y_pred, y_test)
 ```
+```{r}
+y_pred_top <- predict(fit_top, X_test)
+confusionMatrix(y_pred_top, y_test)
+```
+
 ```{r}
 multi_prediction <- predict(fit, test_data[,-1])
 multi_results_df <- data.frame(multi_prediction)
 multi_prediction
 ```
-```{r}
-colnames(X_train)
-```
 
+## Expore TXT File
 ```{r}
 write.table(multi_results_df, "multiclass_k5484.txt", sep="\t", quote = FALSE, row.names=FALSE,col.names=FALSE)
 ```
