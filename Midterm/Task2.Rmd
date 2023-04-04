@@ -9,6 +9,8 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(caret)
+library(randomForest)
+library(Boruta)
 ```
 
 ```{r}
@@ -40,11 +42,29 @@ y_train <- factor(training_data$class[split])
 y_test <- factor(training_data$class[-split])
 ```
 
+## Hand Select 
+```{r}
+# Set up the cross-validation method and parameter grid for tuning
+control <- trainControl(method = "cv", number = 10)
+grid <- expand.grid(mtry = c(10, 50, 100, 200))
+#grid <- expand.grid(mtry = c(5, 10, 20, 50, 100, 200, 300, 400, 450, 475),
+                        #splitrule = c("gini", "extratrees"))
+```
+```{r}
+grid
+```
+
 
 ```{r}
-
-fit <- train(X_train, y_train, method="rf", trControl=trainControl(method="none"))
+fit <- train(X_train, y_train, method="rf", trControl= control,tuneGrid = grid,ntree = 100)
 ```
+```{r}
+# Get the optimal hyperparameters
+best_mtry <- model$bestTune$mtry
+best_splitrule <- model$bestTune$splitrule
+```
+
+## feature selection
 ```{r}
 # calculate variable importance scores
 importance <- varImp(fit)
@@ -58,6 +78,7 @@ top_features
 fit_top <- train(X_train[, top_features], y_train, method = "rf", trControl = trainControl(method = "none"))
 ```
 
+## Prediction
 ```{r}
 y_pred <- predict(fit, X_test)
 confusionMatrix(y_pred, y_test)
@@ -72,6 +93,8 @@ multi_prediction <- predict(fit, test_data[,-1])
 multi_results_df <- data.frame(multi_prediction)
 multi_prediction
 ```
+
+
 
 ## Expore TXT File
 ```{r}
