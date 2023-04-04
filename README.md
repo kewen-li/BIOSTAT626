@@ -13,7 +13,7 @@ Raw Model - Logistic Regression for Task 1 , Random Forest for Task 2
 
 | Accuracy    | Test        | Actual     |
 | ----------- | ----------- |----------- |
-| Raw Model   |  0.98       | NULL       |
+| Raw Model   |  0.98       | 0.926      |
 
   
 2st Adjustment: Penalty L1 or L2
