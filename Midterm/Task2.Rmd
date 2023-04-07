@@ -44,26 +44,98 @@ y_test <- factor(training_data$class[-split])
 
 ## Hand Select 
 ```{r}
+#grid <- expand.grid(mtry = c(5, 10, 20, 50, 100, 200, 300, 400, 450, 475))
+mtry_vals <- seq(from = 5, to = 50, by = 5)
+#ntree_vals <- seq(from = 50, to = 500, by = 50)
+param_grid <- expand.grid(.mtry = 10)
 # Set up the cross-validation method and parameter grid for tuning
-control <- trainControl(method = "cv", number = 10)
-grid <- expand.grid(mtry = c(10, 50, 100, 200))
-#grid <- expand.grid(mtry = c(5, 10, 20, 50, 100, 200, 300, 400, 450, 475),
-                        #splitrule = c("gini", "extratrees"))
-```
-```{r}
-grid
+control <- trainControl(method = 'repeatedcv',
+                        number = 10,
+                        repeats = 3,
+                        search = 'grid')
 ```
 
 
 ```{r}
-fit <- train(X_train, y_train, method="rf", trControl= control,tuneGrid = grid,ntree = 100)
+set.seed(123)
+modellist <- list()
+#train with different ntree parameters
+for (ntree in seq(from = 50, to = 500, by = 50)){
+  fit <- train(X_train, y_train,
+               method = 'rf',
+               metric = 'Accuracy',
+               tuneGrid = param_grid,
+               trControl = control,
+               ntree = ntree,verbose = TRUE)
+  key <- toString(ntree)
+  modellist[[key]] <- fit
+}
+#fit <- train(X_train, y_train, method="rf", trControl= control, tuneGrid = param_grid,verbose = TRUE)
 ```
+```{r}
+#Compare results
+results <- resamples(modellist)
+summary(results)
+```
+```{r}
+dotplot(results)
+```
+
 ```{r}
 # Get the optimal hyperparameters
-best_mtry <- model$bestTune$mtry
-best_splitrule <- model$bestTune$splitrule
+best_mtry <- fit$bestTune$mtry
+best_ntree <- fit$bestTune$ntree
+print(best_mtry,best_ntree)
 ```
 
+
+```{r}
+control <- trainControl(method='repeatedcv', 
+                        number=10, 
+                        repeats=3,
+                        search = 'random')
+
+set.seed(123)
+modellist <- list()
+for (ntree in seq(from = 10, to = 100, by = 10)){
+print(paste0("Ntree ",ntree," started"))
+  fit <- train(X_train, y_train,
+               method = 'rf',
+               metric = 'Accuracy',
+               trControl = control,
+               tuneLength  = 10,
+                verbose = 1)
+  key <- toString(ntree)
+  modellist[[key]] <- fit
+  print(paste0("Ntree ",ntree,"finished"))
+}
+```
+```{r}
+#n tree 10
+  fit <- train(X_train, y_train,
+               method = 'rf',
+               metric = 'Accuracy',
+               trControl = control,
+               tuneLength  = 10,
+               ntree=10)
+  key <- toString(10)
+  modellist[[key]] <- fit
+```
+```{r}
+#Compare results
+results <- resamples(modellist)
+summary(results)
+```
+```{r}
+dotplot(results)
+```
+
+```{r}
+results
+```
+```{r}
+modellist[2]
+```
 ## feature selection
 ```{r}
 # calculate variable importance scores
@@ -78,14 +150,25 @@ top_features
 fit_top <- train(X_train[, top_features], y_train, method = "rf", trControl = trainControl(method = "none"))
 ```
 
+
+
 ## Prediction
 ```{r}
-y_pred <- predict(fit, X_test)
-confusionMatrix(y_pred, y_test)
+# Using n tree =100, mtry =20
+repGrid <- expand.grid(.mtry=c(20))  # no ntree
+ best_fit <- train(X_train, y_train,
+               method = 'rf',
+               metric = 'Accuracy',
+               trControl = trainControl(method='repeatedcv', 
+                        number=10, 
+                        repeats=3),
+               tuneGrid = repGrid,
+               ntree=100)
 ```
+
 ```{r}
-y_pred_top <- predict(fit_top, X_test)
-confusionMatrix(y_pred_top, y_test)
+y_pred <- predict(modellist[[2]], X_test)
+confusionMatrix(y_pred, y_test)
 ```
 
 ```{r}
