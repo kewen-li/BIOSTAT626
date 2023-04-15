@@ -1,29 +1,39 @@
 # BIOSTAT626
-A repository of BIOSTAT 626
+## Datasets
 
-## Midterm
-Raw Model - Logistic Regression for Task 1 , Random Forest for Task 2
+The dataset consists of the following files:
 
+- 'training_data.txt': Training dataset
 
-| Accuracy    | Task 1      | Task 2     |
-| ----------- | ----------- |----------- |
-| Raw Model   |  1.00       | 0.93       |
+- 'test_data.txt': Testing Dataset
 
-1st Adjustment - 500 best features Random Forest in Task 2
+- 'data_dictionary.txt': Introduction of the dataset
 
-| Accuracy    | Test        | Actual     |
-| ----------- | ----------- |----------- |
-| Raw Model   |  0.98       | 0.926      |
+- 'features_info.txt': Detailed information provided for each features
+
+## Prerequisites
+
+  - Running Environment: Rstudio
+  - 'test_data.txt’
+  - 'training_data.txt'
+
+## Libraries
+
+  These libraries are required to install.
+
+  ```R
+  library(readr)
+  library(dplyr)
+  library(tidyr)
+  library(caret)
+  library(randomForest)
+  library(Boruta)
+  ```
 
   
-2st Adjustment: Random Forest Small Tune
 
-| Accuracy    | Test        | Actual     |
-| ----------- | ----------- |----------- |
-| Raw Model   |  0.98       | 0.933      |
+## Instructions
 
-3rd Adjustment: Random Forest try mtry from 5 to 100, n tree 50 to 250
-
-| Accuracy    | Test        | Actual     |
-| ----------- | ----------- |----------- |
-| Raw Model   |  0.9787     | 0.933      |
+  1. To reproduce the results, open Rstudio and two Rmd files for different task. (e.g. Task1.Rmd, Task2.Rmd), and install the libraries mentioned above.
+  2. Just Run the code sequentially, it will perform read data, data preprocessing, feature selection, train model, convert data frame and export data file these steps.
+  3. Each Rmd will export one txt file under the format, binary_k5484.txt or multiclass_k5484.txt, depending on which Task you run.
