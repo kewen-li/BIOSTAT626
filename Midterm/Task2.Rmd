@@ -88,39 +88,42 @@ best_ntree <- fit$bestTune$ntree
 print(best_mtry,best_ntree)
 ```
 
+## Feature Selection
 
+```{r}
+boruta <- Boruta(x=X_train,y=y_train, doTrace = 2, maxRuns = 500)
+```
+```{r}
+bor <- TentativeRoughFix(boruta)
+print(bor)
+```
+```{r}
+selected_features<- getSelectedAttributes(boruta, withTentative = F)
+selected_features
+```
+
+## Random Forest Tunning (selected features)
 ```{r}
 control <- trainControl(method='repeatedcv', 
                         number=10, 
                         repeats=3,
                         search = 'random')
 
-set.seed(123)
 modellist <- list()
-for (ntree in seq(from = 10, to = 100, by = 10)){
+for (ntree in seq(from = 10, to = 160, by = 30)){
 print(paste0("Ntree ",ntree," started"))
-  fit <- train(X_train, y_train,
+  fit <- train(X_train[,selected_features], y_train,
                method = 'rf',
                metric = 'Accuracy',
                trControl = control,
-               tuneLength  = 10,
+               tuneLength  = 5,
                 verbose = 1)
   key <- toString(ntree)
   modellist[[key]] <- fit
   print(paste0("Ntree ",ntree,"finished"))
 }
 ```
-```{r}
-#n tree 10
-  fit <- train(X_train, y_train,
-               method = 'rf',
-               metric = 'Accuracy',
-               trControl = control,
-               tuneLength  = 10,
-               ntree=10)
-  key <- toString(10)
-  modellist[[key]] <- fit
-```
+
 ```{r}
 #Compare results
 results <- resamples(modellist)
@@ -129,28 +132,6 @@ summary(results)
 ```{r}
 dotplot(results)
 ```
-
-```{r}
-results
-```
-```{r}
-modellist[2]
-```
-## feature selection
-```{r}
-# calculate variable importance scores
-importance <- varImp(fit)
-
-# select top 2 features based on importance scores
-top_features <- row.names(importance$importance)[order(importance$importance$Overall, decreasing = TRUE)[1:500]]
-top_features
-```
-```{r}
-# fit model with top features only
-fit_top <- train(X_train[, top_features], y_train, method = "rf", trControl = trainControl(method = "none"))
-```
-
-
 
 ## Prediction
 ```{r}
@@ -165,9 +146,12 @@ repGrid <- expand.grid(.mtry=c(20))  # no ntree
                tuneGrid = repGrid,
                ntree=100)
 ```
+```{r}
+modellist[5]
+```
 
 ```{r}
-y_pred <- predict(modellist[[2]], X_test)
+y_pred <- predict(modellist[[5]], X_test)
 confusionMatrix(y_pred, y_test)
 ```
 
